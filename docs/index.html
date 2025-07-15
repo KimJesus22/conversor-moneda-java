@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Conversor de Monedas</title>
+    <title>Conversor de Monedas Mejorado</title>
     <style>
         body {
           font-family: Arial, sans-serif;
-          max-width: 400px;
+          max-width: 420px;
           margin: 40px auto;
           padding: 0 20px;
         }
@@ -20,7 +20,7 @@
           margin-top: 15px;
           font-weight: bold;
         }
-        input {
+        select, input[type=number] {
           width: 100%;
           padding: 8px;
           font-size: 1em;
@@ -54,49 +54,132 @@
           font-weight: bold;
           text-align: center;
         }
+        #historial {
+          margin-top: 30px;
+          border-top: 1px solid #ccc;
+          padding-top: 10px;
+        }
+        #historial h2 {
+          font-size: 1.1em;
+          margin-bottom: 8px;
+          color: #34495e;
+        }
+        #historial ul {
+          list-style: none;
+          padding-left: 0;
+          max-height: 150px;
+          overflow-y: auto;
+        }
+        #historial ul li {
+          font-size: 0.9em;
+          margin-bottom: 6px;
+          border-bottom: 1px dotted #bbb;
+          padding-bottom: 4px;
+        }
     </style>
 </head>
 <body>
-<h1>💱 Conversor de Monedas</h1>
+<h1>💱 Conversor de Monedas Mejorado</h1>
 
 <label for="cantidad">Cantidad:</label>
 <input type="number" id="cantidad" placeholder="100" min="0" />
 
-<label for="monedaOrigen">Moneda Origen (ej: USD, EUR):</label>
-<input type="text" id="monedaOrigen" placeholder="USD" maxlength="3" />
+<label for="monedaOrigen">Moneda Origen:</label>
+<select id="monedaOrigen"></select>
 
-<label for="monedaDestino">Moneda Destino (ej: MXN, ARS):</label>
-<input type="text" id="monedaDestino" placeholder="MXN" maxlength="3" />
+<label for="monedaDestino">Moneda Destino:</label>
+<select id="monedaDestino"></select>
 
 <button onclick="convertir()">Convertir</button>
 
 <div id="resultado"></div>
 <div id="error"></div>
 
+<div id="historial">
+    <h2>Historial de conversiones:</h2>
+    <ul id="listaHistorial"></ul>
+</div>
+
 <script>
-    const API_KEY = "1970fb8ef9a2e843696eb749"; // Tu API Key aquí
+    const API_KEY = "1970fb8ef9a2e843696eb749";
 
-    async function convertir() {
-      const cantidad = parseFloat(document.getElementById("cantidad").value);
-      const origen = document.getElementById("monedaOrigen").value.trim().toUpperCase();
-      const destino = document.getElementById("monedaDestino").value.trim().toUpperCase();
+    // Lista de monedas (puedes ampliar esta lista si quieres)
+    const monedas = [
+      "USD", "MXN", "EUR", "ARS", "BOB", "BRL", "CLP", "COP", "GBP", "JPY", "CAD"
+    ];
 
+    // Rellenar selects con las monedas
+    const origenSelect = document.getElementById("monedaOrigen");
+    const destinoSelect = document.getElementById("monedaDestino");
+
+    monedas.forEach(moneda => {
+      const option1 = document.createElement("option");
+      option1.value = moneda;
+      option1.textContent = moneda;
+      origenSelect.appendChild(option1);
+
+      const option2 = document.createElement("option");
+      option2.value = moneda;
+      option2.textContent = moneda;
+      destinoSelect.appendChild(option2);
+    });
+
+    // Poner valores predeterminados
+    origenSelect.value = "USD";
+    destinoSelect.value = "MXN";
+
+    // Función para mostrar mensajes de error
+    function mostrarError(msg) {
+      const errorDiv = document.getElementById("error");
+      const resultadoDiv = document.getElementById("resultado");
+      errorDiv.textContent = msg;
+      resultadoDiv.textContent = "";
+    }
+
+    // Función para mostrar resultados
+    function mostrarResultado(msg) {
       const resultadoDiv = document.getElementById("resultado");
       const errorDiv = document.getElementById("error");
-
-      resultadoDiv.textContent = "";
+      resultadoDiv.textContent = msg;
       errorDiv.textContent = "";
+    }
+
+    // Función para guardar historial en localStorage
+    function guardarHistorial(registro) {
+      let historial = JSON.parse(localStorage.getItem("historialConversiones")) || [];
+      historial.unshift(registro); // agrega al inicio
+      if (historial.length > 10) historial.pop(); // limita a 10 registros
+      localStorage.setItem("historialConversiones", JSON.stringify(historial));
+      mostrarHistorial();
+    }
+
+    // Función para mostrar historial en pantalla
+    function mostrarHistorial() {
+      let historial = JSON.parse(localStorage.getItem("historialConversiones")) || [];
+      const ul = document.getElementById("listaHistorial");
+      ul.innerHTML = "";
+      historial.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = `${item.fecha} | ${item.cantidad} ${item.origen} → ${item.convertido} ${item.destino} | Tasa: ${item.tasa}`;
+        ul.appendChild(li);
+      });
+    }
+
+    // Mostrar historial al cargar la página
+    mostrarHistorial();
+
+    // Función principal para convertir
+    async function convertir() {
+      const cantidad = parseFloat(document.getElementById("cantidad").value);
+      const origen = origenSelect.value;
+      const destino = destinoSelect.value;
 
       if (isNaN(cantidad) || cantidad <= 0) {
-        errorDiv.textContent = "Por favor, ingresa una cantidad válida mayor que cero.";
+        mostrarError("Por favor, ingresa una cantidad válida mayor que cero.");
         return;
       }
-      if (!origen || origen.length !== 3) {
-        errorDiv.textContent = "Por favor, ingresa un código de moneda origen válido (3 letras).";
-        return;
-      }
-      if (!destino || destino.length !== 3) {
-        errorDiv.textContent = "Por favor, ingresa un código de moneda destino válido (3 letras).";
+      if (origen === destino) {
+        mostrarError("Las monedas de origen y destino deben ser diferentes.");
         return;
       }
 
@@ -114,16 +197,33 @@
 
         const tasa = data.conversion_rates[destino];
         if (!tasa) {
-          errorDiv.textContent = `Moneda destino "${destino}" no encontrada.`;
+          mostrarError(`Moneda destino "${destino}" no encontrada.`);
           return;
         }
 
-        const convertido = cantidad * tasa;
-        resultadoDiv.textContent = `${cantidad} ${origen} = ${convertido.toFixed(2)} ${destino}`;
+        const convertido = (cantidad * tasa).toFixed(4);
+
+        // Mostrar resultado con tasa
+        mostrarResultado(`${cantidad} ${origen} = ${convertido} ${destino}\nTasa usada: 1 ${origen} = ${tasa} ${destino}`);
+
+        // Fecha actual en formato legible
+        const fecha = new Date().toLocaleString();
+
+        // Guardar en historial
+        guardarHistorial({
+          fecha: fecha,
+          cantidad: cantidad,
+          origen: origen,
+          destino: destino,
+          convertido: convertido,
+          tasa: tasa
+        });
+
       } catch (error) {
-        errorDiv.textContent = "Error consultando la API: " + error.message;
+        mostrarError("Error consultando la API: " + error.message);
       }
     }
 </script>
 </body>
 </html>
+
