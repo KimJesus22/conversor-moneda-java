@@ -43,6 +43,14 @@ Permite **consultar tasas de cambio en tiempo real** utilizando la API de [Excha
 
 ## ⚙️ Instalación y ejecución
 
+### Uso versión web
+
+- La versión web está publicada en GitHub Pages y se puede usar directamente en:  
+  (https://kimjesus22.github.io/conversor-moneda-java/)
+
+- No es necesario abrir localmente el archivo `index.html`, solo abre el enlace para usar el conversor en línea.
+
+
 1️⃣ **Clonar el repositorio**
 
 ```bash
