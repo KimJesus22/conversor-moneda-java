@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Conversor de Monedas</title>
+    <style>
+        body {
+          font-family: Arial, sans-serif;
+          max-width: 400px;
+          margin: 40px auto;
+          padding: 0 20px;
+        }
+        h1 {
+          text-align: center;
+          color: #2c3e50;
+        }
+        label {
+          display: block;
+          margin-top: 15px;
+          font-weight: bold;
+        }
+        input {
+          width: 100%;
+          padding: 8px;
+          font-size: 1em;
+          margin-top: 5px;
+          box-sizing: border-box;
+        }
+        button {
+          margin-top: 20px;
+          padding: 10px;
+          font-size: 1em;
+          width: 100%;
+          background-color: #3498db;
+          color: white;
+          border: none;
+          cursor: pointer;
+          border-radius: 5px;
+        }
+        button:hover {
+          background-color: #2980b9;
+        }
+        #resultado {
+          margin-top: 25px;
+          font-size: 1.2em;
+          font-weight: bold;
+          color: #27ae60;
+          text-align: center;
+        }
+        #error {
+          margin-top: 25px;
+          color: #e74c3c;
+          font-weight: bold;
+          text-align: center;
+        }
+    </style>
+</head>
+<body>
+<h1>💱 Conversor de Monedas</h1>
+
+<label for="cantidad">Cantidad:</label>
+<input type="number" id="cantidad" placeholder="100" min="0" />
+
+<label for="monedaOrigen">Moneda Origen (ej: USD, EUR):</label>
+<input type="text" id="monedaOrigen" placeholder="USD" maxlength="3" />
+
+<label for="monedaDestino">Moneda Destino (ej: MXN, ARS):</label>
+<input type="text" id="monedaDestino" placeholder="MXN" maxlength="3" />
+
+<button onclick="convertir()">Convertir</button>
+
+<div id="resultado"></div>
+<div id="error"></div>
+
+<script>
+    const API_KEY = "1970fb8ef9a2e843696eb749"; // Tu API Key aquí
+
+    async function convertir() {
+      const cantidad = parseFloat(document.getElementById("cantidad").value);
+      const origen = document.getElementById("monedaOrigen").value.trim().toUpperCase();
+      const destino = document.getElementById("monedaDestino").value.trim().toUpperCase();
+
+      const resultadoDiv = document.getElementById("resultado");
+      const errorDiv = document.getElementById("error");
+
+      resultadoDiv.textContent = "";
+      errorDiv.textContent = "";
+
+      if (isNaN(cantidad) || cantidad <= 0) {
+        errorDiv.textContent = "Por favor, ingresa una cantidad válida mayor que cero.";
+        return;
+      }
+      if (!origen || origen.length !== 3) {
+        errorDiv.textContent = "Por favor, ingresa un código de moneda origen válido (3 letras).";
+        return;
+      }
+      if (!destino || destino.length !== 3) {
+        errorDiv.textContent = "Por favor, ingresa un código de moneda destino válido (3 letras).";
+        return;
+      }
+
+      const url = `https://v6.exchangerate-api.com/v6/${API_KEY}/latest/${origen}`;
+
+      try {
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error("Error en la respuesta de la API");
+
+        const data = await resp.json();
+
+        if (data.result !== "success") {
+          throw new Error(data["error-type"] || "Error desconocido de la API");
+        }
+
+        const tasa = data.conversion_rates[destino];
+        if (!tasa) {
+          errorDiv.textContent = `Moneda destino "${destino}" no encontrada.`;
+          return;
+        }
+
+        const convertido = cantidad * tasa;
+        resultadoDiv.textContent = `${cantidad} ${origen} = ${convertido.toFixed(2)} ${destino}`;
+      } catch (error) {
+        errorDiv.textContent = "Error consultando la API: " + error.message;
+      }
+    }
+</script>
+</body>
+</html>
